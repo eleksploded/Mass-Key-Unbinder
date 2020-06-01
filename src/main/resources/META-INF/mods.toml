@@ -1,0 +1,28 @@
+modLoader="javafml" #mandatory
+loaderVersion="[31,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+[[mods]] #mandatory
+# The modid of the mod
+modId="massunbind" #mandatory
+version="${file.jarVersion}" #mandatory
+displayName="Mass Key Unbinder" #mandatory
+displayURL="http://example.com/" #optional
+credits="Kreezxil for the idea" #optional
+# A text field displayed in the mod UI
+authors="Eleksploded" #optional
+description='''
+A simple mod to unbind all mod keybinding for easier key setup
+'''
+# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
+[[dependencies.massunbing]] #optional
+    modId="forge" #mandatory
+    mandatory=true #mandatory
+    versionRange="[31,)" #mandatory
+    ordering="NONE"
+    side="BOTH"
+# Here's another dependency
+[[dependencies.massunbing]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.15.2]"
+    ordering="NONE"
+    side="BOTH"
