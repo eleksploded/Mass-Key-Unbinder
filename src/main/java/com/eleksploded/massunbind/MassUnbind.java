@@ -1,60 +1,67 @@
 package com.eleksploded.massunbind;
 
+import java.io.File;
+
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod("massunbind")
+// 1.12
+@Mod(modid = "massunbind")
 public class MassUnbind
 {
-    // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
-    
-    KeyBinding[] originalBinding;
+	KeyBinding[] originalBinding;
+	private static Logger LOGGER;
 
-    public MassUnbind() {
-        MinecraftForge.EVENT_BUS.register(this);
-        
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, UnbindConfig.spec);
-        
-        originalBinding = Minecraft.getInstance().gameSettings.keyBindings.clone();
-    }
-    
-    @SuppressWarnings("unused")
-	@OnlyIn(Dist.CLIENT)
-    @SubscribeEvent
-    public void tick(final TickEvent e) {
-    	if(!UnbindConfig.general.reset.get()) return;
-    	
-    	LOGGER.info("Unbinding keys...");
-    	
-    	for(KeyBinding bind : Minecraft.getInstance().gameSettings.keyBindings) {
-    		if(!ArrayUtils.contains(originalBinding, bind)) {
-    			LOGGER.info("Unbinding key: " + bind.getLocalizedName() + " in " + bind.getKeyCategory());
-    			Minecraft.getInstance().gameSettings.setKeyBindingCode(bind, InputMappings.INPUT_INVALID);
-    		}
-    	}
-    	
-    	LOGGER.info("All keys unbound. Cleaning up...");
-    	for(KeyBinding key : originalBinding) {
-    		key = null;
-    	}
-    	originalBinding = null;
-    	UnbindConfig.general.reset.set(false);
-    	UnbindConfig.general.reset.save();
-    	LOGGER.info("Done!");
-    }
+	public static File configFile;
+	public static Configuration config;
+
+	@EventHandler
+	public void preInit(FMLPreInitializationEvent e) {
+		LOGGER = e.getModLog();
+		File directory = e.getModConfigurationDirectory();
+		configFile = new File(directory.getPath(), "massunbind.cfg");
+		config = new Configuration(configFile);
+		MinecraftForge.EVENT_BUS.register(this);
+		originalBinding = Minecraft.getMinecraft().gameSettings.keyBindings.clone();
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent
+	public void tick(final TickEvent e) {
+		if(UnbindConfig.doReset) {
+
+			for(KeyBinding bind : Minecraft.getMinecraft().gameSettings.keyBindings) {
+				if(!ArrayUtils.contains(originalBinding, bind)) {
+					LOGGER.info("Unbinding key: " + bind.getDisplayName() + " in " + bind.getKeyCategory());
+					Minecraft.getMinecraft().gameSettings.setOptionKeyBinding(bind, 0);
+				}
+			}
+
+			LOGGER.info("All keys unbound. Cleaning up...");
+			if(originalBinding != null) {
+				for(@SuppressWarnings("unused") KeyBinding key : originalBinding) {
+					key = null;
+				}
+				originalBinding = null;
+			}
+			Property prop = config.get("general", "doReset", false);
+			prop.set(false);
+			UnbindConfig.doReset = false;
+			config.save();
+			LOGGER.info("Done!");
+		}
+	}
 }
