@@ -25,3 +25,7 @@ run
 /gradlew
 /gradlew.bat
 *.bat
+
+.DS_Store
+
+*.log
